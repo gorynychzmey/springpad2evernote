@@ -66,7 +66,7 @@
                  </xsl:for-each>   
                 </xsl:when>  
                 <xsl:otherwise>
-                 <xsl:copy-of select="div[span[@actual-name='text']]/span[contains(@class,'content')]"/>
+                 <xsl:apply-templates select="div[span[@actual-name='text']]/span[contains(@class,'content')]"/>
                 </xsl:otherwise>
               </xsl:choose>   
              </xsl:element>
@@ -115,5 +115,16 @@
                  <source-url><xsl:value-of select="div[span[@actual-name='url']]/span[contains(@class,'content')]"/></source-url>
              </note-attributes>
         </note>
+    </xsl:template>
+    <xsl:template match="span">
+        <xsl:copy>
+            <xsl:apply-templates select="@* | node()"/>
+        </xsl:copy>
+    </xsl:template>
+    <xsl:template match="@id|@class|@accesskey|@data|@dynsrc|@tabindex"/>
+    <xsl:template match="@* | node()">
+     <xsl:copy>
+        <xsl:apply-templates select="@* | node()"/>
+     </xsl:copy>
     </xsl:template>
 </xsl:stylesheet>
