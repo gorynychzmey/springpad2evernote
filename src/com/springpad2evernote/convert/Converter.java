@@ -13,6 +13,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.xml.sax.SAXException;
+import java.util.zip.*;
 
 
 /*
@@ -26,18 +27,31 @@ import org.xml.sax.SAXException;
  */
 public class Converter {
 
+private static String INDEX_NAME = "index.html";    
+    
 public static String filename;    
+public static ZipFile zip;
     
 public static void main(String[] args) throws FileNotFoundException, IOException, TransformerConfigurationException, TransformerException, ParserConfigurationException, SAXException {
     if(args.length<1) {
         System.out.println("Need file name to convert");
+        return;
     }
     
     filename = args[0];
     
-    InputStream is = new FileInputStream(args[0]);
+    zip = new ZipFile(new File(filename));
+    
+    ZipEntry idx = zip.getEntry(INDEX_NAME);
+            
+    if(idx==null){
+        System.out.println("Zip archive must have "+INDEX_NAME+" inside");
+        return;
+    }
+        
+    InputStream is = zip.getInputStream(idx);
 
-    OutputStream os = new FileOutputStream(args[0]+".enex");
+    OutputStream os = new FileOutputStream(filename+".enex");
 
     String str = new java.util.Scanner(is).useDelimiter("\\A").next();
     str = str.replaceAll("[\\x00-\\x09\\x0B-\\x0D\\x0E-\\x1F]", "").replaceAll("&nbsp;","&#160;").replaceAll("&(?![\\w#]+;)","&amp;");

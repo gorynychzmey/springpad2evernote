@@ -9,6 +9,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.zip.ZipEntry;
 import org.apache.commons.lang3.StringUtils;
 import sun.misc.BASE64Encoder;
 
@@ -19,18 +21,28 @@ import sun.misc.BASE64Encoder;
 public class Utils {
     private static final int BUFSIZE = 65536;
     
+    private static final HashMap filecache = new HashMap();
+    
     private static byte [] readFile(String filename) throws MalformedURLException, IOException {
+      if(filecache.containsKey(filename)){
+       return (byte[])filecache.get(filename);   
+      }  
       InputStream is;
       try {   
       if(filename.matches("https?://.*"))
        is = (new URL(filename)).openConnection().getInputStream();
-      else
-       is = new FileInputStream(getDefaultPath()+filename);
+      else {
+       ZipEntry entry = Converter.zip.getEntry(filename);   
+       if(entry==null)
+        return null;   
+       is = Converter.zip.getInputStream(entry);
+      } 
       byte[] buf = new byte[BUFSIZE];
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       int bytesRead;
       while((bytesRead=is.read(buf))>-1) 
        baos.write(buf,0,bytesRead);   
+      filecache.put(filename, baos.toByteArray());
       return baos.toByteArray();
       } catch (FileNotFoundException e) {
         System.err.println("Error: "+e.getStackTrace());
@@ -38,11 +50,6 @@ public class Utils {
       }
     }
     
-    public static String getDefaultPath() throws IOException {
-      String path = (new File(Converter.filename)).getCanonicalPath();  
-      return path.substring(0,path.lastIndexOf('\\')+1);
-    }
-
     public static String toBase64(String filename) throws FileNotFoundException, IOException{
       byte [] bytes = readFile(filename);
       BASE64Encoder codec = new BASE64Encoder();
@@ -50,11 +57,11 @@ public class Utils {
     }
     
     public static String getFileName(String filename){
-       return (new File(filename)).getName(); 
-    }
+	return filename.substring(filename.lastIndexOf(File.separatorChar) + 1);
+}
 
     public static String getFileExt(String filename){
-       String name =  (new File(filename)).getName();
+       String name =  getFileName(filename);
        return name.substring(name.lastIndexOf('.')+1); 
     }
     
